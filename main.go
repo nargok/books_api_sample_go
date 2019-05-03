@@ -1,11 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	// "fmt"
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
+	"github.com/subosito/gotenv"
 	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 )
@@ -18,17 +22,39 @@ type Book struct {
 }
 
 var books []Book
+var db *sql.DB
+
+func init() {
+	gotenv.Load()
+}
+
+func logFatal(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func main() {
+	pgUrl, err := pq.ParseURL(os.Getenv("DB_URL"))
+	logFatal(err)
+
+	log.Println(pgUrl)
+
+	db, err = sql.Open("postgres", pgUrl)
+	logFatal(err)
+
+	err = db.Ping()
+	logFatal(err)
+
 	router := mux.NewRouter()
 
-	books = append(books,
-		Book{ID: 1, Title: "Go lang start", Author: "Mr. sekiro", Year: "2011"},
-		Book{ID: 2, Title: "Go lang second chapter", Author: "Mr. YanRon", Year: "2015"},
-		Book{ID: 3, Title: "Go lang third chapter", Author: "Mr. Masaomi", Year: "2014"},
-		Book{ID: 4, Title: "Go lang foutth chapter", Author: "Ms. Amane", Year: "2010"},
-		Book{ID: 5, Title: "Go lang end", Author: "Mr. Rokaku", Year: "2018"},
-	)
+	// books = append(books,
+	// 	Book{ID: 1, Title: "Go lang start", Author: "Mr. sekiro", Year: "2011"},
+	// 	Book{ID: 2, Title: "Go lang second chapter", Author: "Mr. YanRon", Year: "2015"},
+	// 	Book{ID: 3, Title: "Go lang third chapter", Author: "Mr. Masaomi", Year: "2014"},
+	// 	Book{ID: 4, Title: "Go lang foutth chapter", Author: "Ms. Amane", Year: "2010"},
+	// 	Book{ID: 5, Title: "Go lang end", Author: "Mr. Rokaku", Year: "2018"},
+	// )
 
 	router.HandleFunc("/books", getBooks).Methods("GET")
 	router.HandleFunc("/books/{id}", getBook).Methods("GET")
@@ -40,6 +66,21 @@ func main() {
 }
 
 func getBooks(w http.ResponseWriter, r *http.Request) {
+	var book Book
+	books = []Book{}
+
+	rows, err := db.Query("select * from books")
+	logFatal(err)
+
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&book.ID, &book.Title, &book.Author, &book.Year)
+		logFatal(err)
+
+		books = append(books, book)
+	}
+
 	json.NewEncoder(w).Encode(books)
 }
 
