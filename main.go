@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	// "fmt"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
 	"github.com/subosito/gotenv"
@@ -47,14 +46,6 @@ func main() {
 	logFatal(err)
 
 	router := mux.NewRouter()
-
-	// books = append(books,
-	// 	Book{ID: 1, Title: "Go lang start", Author: "Mr. sekiro", Year: "2011"},
-	// 	Book{ID: 2, Title: "Go lang second chapter", Author: "Mr. YanRon", Year: "2015"},
-	// 	Book{ID: 3, Title: "Go lang third chapter", Author: "Mr. Masaomi", Year: "2014"},
-	// 	Book{ID: 4, Title: "Go lang foutth chapter", Author: "Ms. Amane", Year: "2010"},
-	// 	Book{ID: 5, Title: "Go lang end", Author: "Mr. Rokaku", Year: "2018"},
-	// )
 
 	router.HandleFunc("/books", getBooks).Methods("GET")
 	router.HandleFunc("/books/{id}", getBook).Methods("GET")
