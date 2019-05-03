@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
 	"strconv"
 )
 
@@ -76,19 +75,14 @@ func getBooks(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBook(w http.ResponseWriter, r *http.Request) {
+	var book Book
 	params := mux.Vars(r)
-	log.Println(params)
-	// display type of id
-	log.Println(reflect.TypeOf(params["id"]))
+	row := db.QueryRow("select * from books where id=$1", params["id"])
 
-	i, _ := strconv.Atoi(params["id"])
-	log.Println(reflect.TypeOf(i))
+	err := row.Scan(&book.ID, &book.Title, &book.Author, &book.Year)
+	logFatal(err)
 
-	for _, book := range books {
-		if book.ID == i {
-			json.NewEncoder(w).Encode(&book)
-		}
-	}
+	json.NewEncoder(w).Encode(book)
 }
 
 func addBook(w http.ResponseWriter, r *http.Request) {
