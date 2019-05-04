@@ -100,15 +100,18 @@ func addBook(w http.ResponseWriter, r *http.Request) {
 
 func updateBook(w http.ResponseWriter, r *http.Request) {
 	var book Book
+	params := mux.Vars(r)
 	json.NewDecoder(r.Body).Decode(&book)
 
-	for i, item := range books {
-		if item.ID == book.ID {
-			books[i] = book
-		}
-	}
+	result, err := db.Exec("update books set title=$1, author=$2, year=$3 where id = $4 RETURNING id;", &book.Title, &book.Author, &book.Year, params["id"])
 
-	json.NewEncoder(w).Encode(books)
+	logFatal(err)
+
+	rowsUpdated, err := result.RowsAffected()
+	logFatal(err)
+	log.Println(rowsUpdated)
+
+	json.NewEncoder(w).Encode(rowsUpdated)
 }
 
 func removeBook(w http.ResponseWriter, r *http.Request) {
