@@ -1,6 +1,7 @@
 package main
 
 import (
+	"books-list/controllers"
 	"books-list/driver"
 	"books-list/models"
 	"database/sql"
@@ -25,11 +26,12 @@ func logFatal(err error) {
 }
 
 func main() {
-	driver.ConnectDB()
+	db = driver.ConnectDB()
+	controller := controllers.Controller{}
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/books", getBooks).Methods("GET")
+	router.HandleFunc("/books", controller.GetBooks(db)).Methods("GET")
 	router.HandleFunc("/books/{id}", getBook).Methods("GET")
 	router.HandleFunc("/books", addBook).Methods("POST")
 	router.HandleFunc("/books/{id}", updateBook).Methods("PUT")
@@ -37,25 +39,6 @@ func main() {
 
 	log.Println("Server is running at port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
-}
-
-func getBooks(w http.ResponseWriter, r *http.Request) {
-	var book models.Book
-	books = []models.Book{}
-
-	rows, err := db.Query("select * from books")
-	logFatal(err)
-
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&book.ID, &book.Title, &book.Author, &book.Year)
-		logFatal(err)
-
-		books = append(books, book)
-	}
-
-	json.NewEncoder(w).Encode(books)
 }
 
 func getBook(w http.ResponseWriter, r *http.Request) {
