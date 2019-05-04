@@ -51,6 +51,7 @@ func main() {
 	router.HandleFunc("/books/{id}", updateBook).Methods("PUT")
 	router.HandleFunc("/books/{id}", removeBook).Methods("DELETE")
 
+	log.Println("Server is running at port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
