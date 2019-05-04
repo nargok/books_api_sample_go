@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 type Book struct {
@@ -116,13 +115,12 @@ func updateBook(w http.ResponseWriter, r *http.Request) {
 
 func removeBook(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	id, _ := strconv.Atoi(params["id"])
 
-	for i, item := range books {
-		if item.ID == id {
-			books = append(books[:i], books[i+1:]...)
-		}
-	}
+	result, err := db.Exec("delete from books where id = $1", params["id"])
+	logFatal(err)
 
-	json.NewEncoder(w).Encode(books)
+	rowsDeleted, err := result.RowsAffected()
+	logFatal(err)
+
+	json.NewEncoder(w).Encode(rowsDeleted)
 }
