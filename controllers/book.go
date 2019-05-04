@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"books-list/models"
+	"books-list/repository"
+	"books-list/utils"
 	"database/sql"
-	"encoding/json"
-	"log"
 	"net/http"
 )
 
@@ -12,30 +12,23 @@ type Controller struct {}
 
 var books []models.Book
 
-func logFatal(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func (c Controller) GetBooks(db *sql.DB) http.HandlerFunc {
 	return func (w http.ResponseWriter, r *http.Request) {
 		var book models.Book
+		var error models.Error
+
 		books = []models.Book{}
+		bookRepo := bookRepository.BookRepository{}
+		books, err := bookRepo.GetBooks(db, book, books)
 
-		rows, err := db.Query("select * from books")
-		logFatal(err)
-
-		defer rows.Close()
-
-		for rows.Next() {
-			err := rows.Scan(&book.ID, &book.Title, &book.Author, &book.Year)
-			logFatal(err)
-
-			books = append(books, book)
+		if err != nil {
+			error.Message = "Server Error"
+			utils.SendError(w, http.StatusInternalServerError, error)
+			return
 		}
 
-		json.NewEncoder(w).Encode(books)
+		w.Header().Set("Content-Type", "application/json")
+		utils.SendSuccess(w, books)
 	}
 }
 
