@@ -1,24 +1,17 @@
 package main
 
 import (
+	"books-list/driver"
+	"books-list/models"
 	"database/sql"
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/lib/pq"
 	"github.com/subosito/gotenv"
 	"log"
 	"net/http"
-	"os"
 )
 
-type Book struct {
-	ID     int    `json:"id"`
-	Title  string `json:"title"`
-	Author string `json:"author"`
-	Year   string `json:"year"`
-}
-
-var books []Book
+var books []models.Book
 var db *sql.DB
 
 func init() {
@@ -32,16 +25,7 @@ func logFatal(err error) {
 }
 
 func main() {
-	pgUrl, err := pq.ParseURL(os.Getenv("DB_URL"))
-	logFatal(err)
-
-	log.Println(pgUrl)
-
-	db, err = sql.Open("postgres", pgUrl)
-	logFatal(err)
-
-	err = db.Ping()
-	logFatal(err)
+	driver.ConnectDB()
 
 	router := mux.NewRouter()
 
@@ -56,8 +40,8 @@ func main() {
 }
 
 func getBooks(w http.ResponseWriter, r *http.Request) {
-	var book Book
-	books = []Book{}
+	var book models.Book
+	books = []models.Book{}
 
 	rows, err := db.Query("select * from books")
 	logFatal(err)
@@ -75,7 +59,7 @@ func getBooks(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBook(w http.ResponseWriter, r *http.Request) {
-	var book Book
+	var book models.Book
 	params := mux.Vars(r)
 	row := db.QueryRow("select * from books where id=$1", params["id"])
 
@@ -86,7 +70,7 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func addBook(w http.ResponseWriter, r *http.Request) {
-	var book Book
+	var book models.Book
 	var bookID int
 
 	json.NewDecoder(r.Body).Decode(&book)
@@ -99,7 +83,7 @@ func addBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateBook(w http.ResponseWriter, r *http.Request) {
-	var book Book
+	var book models.Book
 	params := mux.Vars(r)
 	json.NewDecoder(r.Body).Decode(&book)
 
